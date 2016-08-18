@@ -447,8 +447,6 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         try {
             logProvisionInfo(logger, "Considering launching " + ami + " for template " + description);
 
-            KeyPair keyPair = getKeyPair(ec2);
-
             RunInstancesRequest riRequest = new RunInstancesRequest(ami, 1, 1);
             InstanceNetworkInterfaceSpecification net = new InstanceNetworkInterfaceSpecification();
 
@@ -515,8 +513,6 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
 
             String userDataString = Base64.encodeBase64String(userData.getBytes(StandardCharsets.UTF_8));
             riRequest.setUserData(userDataString);
-            riRequest.setKeyName(keyPair.getKeyName());
-            diFilters.add(new Filter("key-name").withValues(keyPair.getKeyName()));
             riRequest.setInstanceType(type.toString());
             diFilters.add(new Filter("instance-type").withValues(type.toString()));
 
@@ -703,8 +699,6 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             logger.println("Launching " + ami + " for template " + description);
             LOGGER.info("Launching " + ami + " for template " + description);
 
-            KeyPair keyPair = getKeyPair(ec2);
-
             RequestSpotInstancesRequest spotRequest = new RequestSpotInstancesRequest();
 
             // Validate spot bid before making the request
@@ -767,7 +761,6 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             String userDataString = Base64.encodeBase64String(userData.getBytes(StandardCharsets.UTF_8));
 
             launchSpecification.setUserData(userDataString);
-            launchSpecification.setKeyName(keyPair.getKeyName());
             launchSpecification.setInstanceType(type.toString());
 
             if (getAssociatePublicIp()) {
@@ -855,17 +848,6 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         return new EC2SpotSlave(name, sir.getSpotInstanceRequestId(), description, remoteFS, getNumExecutors(), mode, initScript,
                 tmpDir, labels, remoteAdmin, jvmopts, idleTerminationMinutes, EC2Tag.fromAmazonTags(sir.getTags()), parent.name,
                 usePrivateDnsName, getLaunchTimeout(), amiType);
-    }
-
-    /**
-     * Get a KeyPair from the configured information for the slave template
-     */
-    private KeyPair getKeyPair(AmazonEC2 ec2) throws IOException, AmazonClientException {
-        KeyPair keyPair = parent.getPrivateKey().find(ec2);
-        if (keyPair == null) {
-            throw new AmazonClientException("No matching keypair found on EC2. Is the EC2 private key a valid one?");
-        }
-        return keyPair;
     }
 
     /**
