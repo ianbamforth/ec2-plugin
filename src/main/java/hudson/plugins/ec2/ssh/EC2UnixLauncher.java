@@ -130,13 +130,13 @@ public class EC2UnixLauncher extends EC2ComputerLauncher {
         try {
             boolean isBootstrapped = bootstrap(computer, listener);
             if (isBootstrapped) {
-                // connect fresh as ROOT
-                logInfo(computer, listener, "connect fresh as root");
+                // connect fresh as jenkins
+                logInfo(computer, listener, "connect fresh as jenkins");
                 cleanupConn = connectToSsh(computer, listener);
-                KeyPair key = computer.getCloud().getKeyPair();
-                if (!cleanupConn.authenticateWithPublicKey(computer.getRemoteAdmin(), key.getKeyMaterial().toCharArray(), "")) {
+                File f = new File("/home/jenkins/.ssh/id_rsa");
+                if (!cleanupConn.authenticateWithPublicKey(computer.getRemoteAdmin(), f, "jenkins")) {
                     logWarning(computer, listener, "Authentication failed");
-                    return; // failed to connect as root.
+                    return; // failed to connect as jenkins.
                 }
             } else {
                 logWarning(computer, listener, "bootstrapresult failed");
@@ -282,15 +282,13 @@ public class EC2UnixLauncher extends EC2ComputerLauncher {
         try {
             int tries = bootstrapAuthTries;
             boolean isAuthenticated = false;
-            logInfo(computer, listener, "Getting keypair...");
-            KeyPair key = computer.getCloud().getKeyPair();
-            logInfo(computer, listener, "Using key: " + key.getKeyName() + "\n" + key.getKeyFingerprint() + "\n"
-                    + key.getKeyMaterial().substring(0, 160));
+            File f = new File("/home/jenkins/.ssh/id_rsa");
+            logInfo(computer, listener, "Using key: " + "id_rsa" + "\n");
             while (tries-- > 0) {
                 logInfo(computer, listener, "Authenticating as " + computer.getRemoteAdmin());
                 try {
                     bootstrapConn = connectToSsh(computer, listener);
-                    isAuthenticated = bootstrapConn.authenticateWithPublicKey(computer.getRemoteAdmin(), key.getKeyMaterial().toCharArray(), "");
+                    isAuthenticated = bootstrapConn.authenticateWithPublicKey(computer.getRemoteAdmin(), f, "jenkins");
                 } catch(IOException e) {
                     logException(computer, listener, "Exception trying to authenticate", e);
                     bootstrapConn.close();
