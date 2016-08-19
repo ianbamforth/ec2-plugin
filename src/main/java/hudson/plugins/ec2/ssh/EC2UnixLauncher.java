@@ -373,16 +373,7 @@ public class EC2UnixLauncher extends EC2ComputerLauncher {
         if (computer.getNode().usePrivateDnsName) {
             return inst.getPrivateDnsName();
         } else {
-            String host = inst.getPublicDnsName();
-            // If we fail to get a public DNS name, try to get the public IP
-            // (but only if the plugin config let us use the public IP to
-            // connect to the slave).
-            if (host == null || host.equals("")) {
-                SlaveTemplate slaveTemplate = computer.getSlaveTemplate();
-                if (inst.getPublicIpAddress() != null && slaveTemplate.isConnectUsingPublicIp()) {
-                    host = inst.getPublicIpAddress();
-                }
-            }
+            String host = inst.getPublicIpAddress();
             // If we fail to get a public DNS name or public IP, use the private
             // IP.
             if (host == null || host.equals("")) {
